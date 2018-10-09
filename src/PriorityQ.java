@@ -53,14 +53,14 @@ public class PriorityQ {
 			throw new ArrayIndexOutOfBoundsException(); 
 		}
 		// get the value that we are removing
-		String temp = this.heap.get(i + 1).value();
+		String temp = this.heap.get(i).value();
 		
 		// replace this index with the last element
-		this.heap.set(i + 1, this.heap.get(this.heap.size() - 1));
+		this.heap.set(i, this.heap.get(this.heap.size() - 1));
 		// remove the last element
 		this.heap.remove(this.heap.size() - 1);
 		// correct the heap
-		this.heapifyDown(i + 1);
+		this.heapifyDown(i);
 		
 		return temp;
 	}
