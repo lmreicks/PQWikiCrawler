@@ -96,6 +96,34 @@ public class PriorityQ {
 	}
 	
 	/**
+	 * Returns the key(A[i])
+	 * where A is the array used to represent the priority queue
+	 * @param i - index of array
+	 * @return key
+	 */
+	public int getKey(int i) {
+		return this.heap.get(i).key();
+	}
+	
+	/**
+	 * Returns value(A[i])
+	 * where A is the array used to represent the priority queue
+	 * @param i
+	 * @return
+	 */
+	public String getValue(int i) {
+		return this.heap.get(i).value();
+	}
+	
+	/***
+	 * Returns true if and only if the queue is empty
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return this.heap.size() <= 1;
+	}
+	
+	/**
 	 * Returns the size of the heap
 	 * @return size of the array
 	 */
