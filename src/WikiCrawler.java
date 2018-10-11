@@ -1,10 +1,11 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,15 +29,21 @@ public class WikiCrawler {
 	class WebNode {
 		private String relativeUrl;
 		private String html;
-		private ArrayList<String> links;
-		private ArrayList<WebNode> children;
-		private int relevance;
+		public ArrayList<String> edges;
+		public ArrayList<WebNode> children;
+		public int relevance;
 		
 		public WebNode(String relativeUrl) {
 			this.relativeUrl = relativeUrl;
-			this.links = new ArrayList<String>();
+			this.edges = new ArrayList<String>();
 			this.children = new ArrayList<WebNode>();
 			this.setHtml("");
+			try {
+				this.parseHTML();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		public void parseHTML() throws IOException {
@@ -51,13 +58,6 @@ public class WikiCrawler {
 		    	if (foundMain) {
 			    	this.setHtml(this.getHtml().concat(line));	
 		    	}
-		    }
-		    
-		    this.links = extractLinks(this.html);
-		    
-		    for (String link : this.links) {
-		    	WebNode child = new WebNode(link);
-		    	this.children.add(child);
 		    }
 		}
 		
@@ -94,8 +94,7 @@ public class WikiCrawler {
 	 * Matches a string in href="{link}"
 	 * That doesn't contain a # or a :
 	 */
-	// private static final Pattern LINK_REGEX = Pattern.compile("href=\"([^\" >#:]*?)\"");
-	   private static final Pattern LINK_REGEX = Pattern.compile("href=\"(/wiki/([^\" >#:]*?))\"");
+   private static final Pattern LINK_REGEX = Pattern.compile("href=\"(/wiki/([^\" >#:]*?))\"");
 	
 
 	/**
@@ -114,8 +113,6 @@ public class WikiCrawler {
 		this.max = max;
 		this.topics = topics;
 		this.output = output;
-		
-		this.root = new WebNode(seed);
 	}
 	
 	/**
@@ -155,45 +152,53 @@ public class WikiCrawler {
 	}
 	
 	private void BFS() throws IOException, InterruptedException {
-		ArrayList<WebNode> fifoQueue = new ArrayList<WebNode>();
-		ArrayList<Edge> output = new ArrayList<Edge>();
+		ArrayList<WebNode> queue = new ArrayList<WebNode>();
 		ArrayList<String> discovered = new ArrayList<String>();
 
-		fifoQueue.add(this.root);
+		WebNode root = new WebNode(this.seed);
+		queue.add(root);
+		discovered.add(root.relativeUrl);
 		
-		root.parseHTML();
+	    BufferedWriter writer = new BufferedWriter(new FileWriter(this.output));
+	    writer.write(this.max);
 		
-		int requests = 0;
+		int requests = 1;
 		
-		while (!fifoQueue.isEmpty() && requests < this.max) {
-			WebNode vertex = fifoQueue.remove(0);
+		while (!queue.isEmpty()) {
+			WebNode vertex = queue.remove(0);
+			ArrayList<String> links = this.extractLinks(vertex.html);
 			
-			if (!hasTopics(vertex)) {
-				continue;
-			}
-			
-			for (WebNode child: vertex.children) {
-				child.parseHTML();
-				requests++;
-				
-				if (requests % 20 == 0) {
-					Thread.sleep(3000);
-				}
-				
-				if (!discovered.contains(child.relativeUrl)) {
-					discovered.add(child.relativeUrl);
-					fifoQueue.add(child);
-					
-					if (hasTopics(child)) {
-						output.add(new Edge(vertex, child));	
+			for (String link: links) {
+				// if this link isn't the node's link (no self-references)
+				if (!vertex.relativeUrl.equals(link)) {
+					if (!discovered.contains(link) && discovered.size() < this.max) {
+						// if its not in the list, make a new node
+						WebNode child = new WebNode(link);
+						
+						// constructing a new node causes the request to be made, so increment
+						requests++;
+						
+						// every 20 requests sleep for 3 seconds
+						if (requests % 20 == 0) {
+							Thread.sleep(3000);
+						}
+						
+						if (hasTopics(vertex)) {
+							discovered.add(link);
+							writer.append(vertex.relativeUrl + " " + link + "\n");
+							queue.add(child);
+						}
 					}
+					
+					// if already in the discovered list and not in list of edges for this node, add it
+					if (discovered.contains(link) && !vertex.edges.contains(link)) {
+						writer.append(vertex.relativeUrl + " " + link + "\n");
+					}	
 				}
 			}
 		}
 		
-		for (Edge node : output) {
-			System.out.println(node.source.relativeUrl + "  " + node.dest.relativeUrl);	
-		}
+	    writer.close();
 	}
 	
 	private boolean hasTopics(WebNode node) {
@@ -204,11 +209,18 @@ public class WikiCrawler {
 		return hasAllTopics;
 	}
 	
-	private void Priority(WebNode[] nodes) {
+	private void Priority() {
 		PriorityQueue<WebNode> q = new PriorityQueue<WebNode>();
 		
-		for (WebNode node : nodes) {
-			q.add(node);
+		WebNode root = new WebNode(this.seed);
+		
+		if (!hasTopics(root)) {
+			return;
+		}
+		q.add(root);
+		
+		while (!q.isEmpty()) {
+			WebNode node = q.poll();
 		}
 	}
 }
