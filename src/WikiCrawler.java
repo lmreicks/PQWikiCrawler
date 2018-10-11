@@ -180,15 +180,13 @@ public class WikiCrawler {
 					Thread.sleep(3000);
 				}
 				
-//				Edge e = new Edge(vertex, child);
-//				if (hasTopics(child) && !output.contains(e)) {
-//					output.add(e);
-//				}
-
 				if (!discovered.contains(child.relativeUrl)) {
 					discovered.add(child.relativeUrl);
 					fifoQueue.add(child);
-					output.add(new Edge(vertex, child));
+					
+					if (hasTopics(child)) {
+						output.add(new Edge(vertex, child));	
+					}
 				}
 			}
 		}
