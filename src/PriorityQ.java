@@ -1,12 +1,12 @@
 import java.util.ArrayList;
 
-public class PriorityQ {
-	private ArrayList<PriorityNode<Integer, String>> heap;
+public class PriorityQ<T> {
+	private ArrayList<PriorityNode<Integer, T>> heap;
 	
 	public PriorityQ() {
-		this.heap = new ArrayList<PriorityNode<Integer, String>>();
+		this.heap = new ArrayList<PriorityNode<Integer, T>>();
 		// add a number at the 0th index for testing
-		this.heap.add(new PriorityNode<Integer, String>(-1, null));
+		this.heap.add(new PriorityNode<Integer, T>(-1, null));
 	}
 
 	/**
@@ -14,9 +14,9 @@ public class PriorityQ {
 	 * @param s
 	 * @param p
 	 */
-	public void add(String s, int p) {
+	public void add(T s, int p) {
 		// add a new priority node to the end
-		this.heap.add(new PriorityNode<Integer, String>(p, s));
+		this.heap.add(new PriorityNode<Integer, T>(p, s));
 		// heapify from the bottom up
 		this.heapifyUp(this.heap.size() - 1);
 	}
@@ -25,7 +25,7 @@ public class PriorityQ {
 	 * returns a string whose priority is maximum
 	 * @return
 	 */
-	public String returnMax() {
+	public T returnMax() {
 		return this.heap.get(1).value();
 	}
 
@@ -33,8 +33,8 @@ public class PriorityQ {
 	 * returns a string whose priority is maximum and removes if form the queue
 	 * @return
 	 */
-	public String extractMax() {
-		PriorityNode<Integer, String> max = this.heap.get(1);
+	public T extractMax() {
+		PriorityNode<Integer, T> max = this.heap.get(1);
 		this.heap.set(1, this.heap.get(this.heap.size() - 1));
 		this.heap.remove(this.heap.size() - 1);
 
@@ -48,12 +48,12 @@ public class PriorityQ {
 	 * @param i
 	 * @return
 	 */
-	public String remove(int i) {
+	public T remove(int i) {
 		if (i <= 0 || i >= this.heap.size() - 1) {
 			throw new ArrayIndexOutOfBoundsException(); 
 		}
 		// get the value that we are removing
-		String temp = this.heap.get(i).value();
+		T temp = this.heap.get(i).value();
 		
 		// replace this index with the last element
 		this.heap.set(i, this.heap.get(this.heap.size() - 1));
@@ -72,7 +72,7 @@ public class PriorityQ {
 	 */
 	public void decrementPriority(int i, int k) {
 		// get the node
-		PriorityNode<Integer, String> node = this.heap.get(i);
+		PriorityNode<Integer, T> node = this.heap.get(i);
 		// set the node's priority to the current priority - k
 		node.setKey(node.key() - k);
 		
@@ -111,7 +111,7 @@ public class PriorityQ {
 	 * @param i
 	 * @return
 	 */
-	public String getValue(int i) {
+	public T getValue(int i) {
 		return this.heap.get(i).value();
 	}
 	
@@ -137,7 +137,7 @@ public class PriorityQ {
 		} else {
 			int parentIndex = index % 2 == 0 ? index / 2 : (index - 1) / 2;
 			
-			PriorityNode<Integer, String> parent = this.heap.get(parentIndex);
+			PriorityNode<Integer, T> parent = this.heap.get(parentIndex);
 			if (parent.key() < this.heap.get(index).key()) {
 				swap(parentIndex, index);
 				heapifyUp(parentIndex);
@@ -146,7 +146,7 @@ public class PriorityQ {
 	}
 	
 	private void swap(int x, int y) {
-		PriorityNode<Integer, String> temp = this.heap.get(x);
+		PriorityNode<Integer, T> temp = this.heap.get(x);
 		
 		this.heap.set(x, this.heap.get(y));
 		this.heap.set(y, temp);
@@ -155,16 +155,16 @@ public class PriorityQ {
 	private void heapifyDown(int index) {
 		if (index >= this.heap.size()) return;
 		
-		PriorityNode<Integer, String> left = null;
+		PriorityNode<Integer, T> left = null;
 		if (2 * index < this.heap.size()) {
 			left = this.heap.get(2 * index);
 		}
-		PriorityNode<Integer, String> right = null;
+		PriorityNode<Integer, T> right = null;
 		if (2 * index + 1 < this.heap.size()) {
 			right = this.heap.get(2 * index + 1);
 		}
 		
-		PriorityNode<Integer, String> largest = this.heap.get(index);
+		PriorityNode<Integer, T> largest = this.heap.get(index);
 		int largestIndex = index;
 		
 		if (left != null && left.key() > largest.key()) {

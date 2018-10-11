@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,6 +96,7 @@ public class WikiCrawler {
 	 * That doesn't contain a # or a :
 	 */
    private static final Pattern LINK_REGEX = Pattern.compile("href=\"(/wiki/([^\" >#:]*?))\"");
+   private Pattern topicRegex;
 	
 
 	/**
@@ -113,6 +115,13 @@ public class WikiCrawler {
 		this.max = max;
 		this.topics = topics;
 		this.output = output;
+		
+		String pattern = "\b";
+		for (int i = 0; i < topics.length; i++) {
+			pattern += topics[i];
+			pattern += i != topics.length - 1 ?  "|" : "\b";
+		}
+		this.topicRegex = Pattern.compile(pattern);
 	}
 	
 	/**
@@ -145,7 +154,7 @@ public class WikiCrawler {
 			// ii) extract elements using extractMax
 		// after the crawl is done, the edges explored in the crawl method should be written to the output file
 		if (focused) {
-			// Priority();
+			Priority();
 		} else {
 			BFS();
 		}
@@ -209,18 +218,67 @@ public class WikiCrawler {
 		return hasAllTopics;
 	}
 	
-	private void Priority() {
-		PriorityQueue<WebNode> q = new PriorityQueue<WebNode>();
+	private void Priority() throws InterruptedException {
+		PriorityQ<WebNode> q = new PriorityQ<WebNode>();
+		ArrayList<String> discovered = new ArrayList<String>();
 		
 		WebNode root = new WebNode(this.seed);
 		
 		if (!hasTopics(root)) {
 			return;
 		}
-		q.add(root);
+		q.add(root, calculateRelevance(root.html));
 		
-		while (!q.isEmpty()) {
-			WebNode node = q.poll();
+		int pagesVisited = 1;
+		
+		while (!q.isEmpty() && discovered.size() < this.max) {
+			WebNode node = q.extractMax();
+			System.out.println(node.relativeUrl);
+			ArrayList<String> links = extractLinks(node.html);
+			
+			for (String link : links) {
+				if (!node.relativeUrl.equals(link)) {
+					if (!discovered.contains(link)) {
+						WebNode child = new WebNode(link);
+						pagesVisited++;
+						
+						// every 20 requests sleep for 3 seconds
+						if (pagesVisited % 20 == 0) {
+							Thread.sleep(3000);
+						}
+						
+						if (hasTopics(child)) {
+							System.out.println(link);
+							q.add(child, calculateRelevance(child.html));
+							discovered.add(link);	
+						}
+					}
+				}
+			}
 		}
+	}
+	
+	public int calculateRelevance(String html) {
+ 	   	HashMap<String, Integer> matches = new HashMap<String, Integer>();
+ 	   	String[] document = html.split(" ");
+
+ 	   	for (String word : document) {
+ 	   		word = word.toLowerCase();
+ 	   		if (matches.containsKey(word)) {
+ 	   			matches.put(word, matches.get(word) + 1);
+ 	   		} else {
+ 	   			matches.put(word, 1);
+ 	   		}
+ 	   	}
+ 	   	
+ 	   	int total = 0;
+ 	   	for (String topic: topics) {
+ 	   		topic = topic.toLowerCase().trim();
+ 	   		if (matches.containsKey(topic)) {
+ 	   			total += matches.get(topic);
+ 	   		}
+ 	   	}
+		
+	    return total;
 	}
 }
