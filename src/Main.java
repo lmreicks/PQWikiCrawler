@@ -3,11 +3,11 @@ import java.io.IOException;
 public class Main {
 	public static void main(String[] args) {
 		String[] topics = {
-				"teen",
-				"ellen page",
-				"pregnancy"
+				"theory",
+				"computer",
+				"systems"
 		};
-		WikiCrawler wc = new WikiCrawler("/wiki/Juno_(film)", 100, topics, "./output.txt");
+		WikiCrawler wc = new WikiCrawler("/wiki/Complexity_theory", 100, topics, "./output.txt");
 		
 		try {
 			wc.crawl(true);

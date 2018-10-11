@@ -62,21 +62,19 @@ public class WikiCrawler {
 		    }
 		}
 		
-		public void calculateRelevance() {
-	 	   	int matches = 0;
-
-			String pattern = "\b";
-			for (int i = 0; i < topics.length; i++) {
-				pattern += topics[i];
-				pattern += i != topics.length - 1 ?  "|" : "\b";
-			}
-			final Pattern topicRegex = Pattern.compile(pattern);
-	 	   	final Matcher matcher = topicRegex.matcher(this.getHtml());
-		    while (matcher.find()) {
-		        matches++;
-		    }
+		public int calculateRelevance() {
+	 	   	int total = 0;
+	 	   	for (String topic: topics) {
+	 	 	   	Pattern p = Pattern.compile("\\b(\\w*" + topic + "\\w*)\\b");
+	 	 	   	Matcher matcher = p.matcher(html);
+	 		    while (matcher.find()) {
+	 		        total++;
+	 		    }
+	 	   	}
+	 	   	
+		    this.relevance = total;
 			
-		    this.relevance = matches;
+		    return total;
 		}
 
 		public String getHtml() {
@@ -231,13 +229,13 @@ public class WikiCrawler {
 		
 		int pagesVisited = 1;
 		
-		while (!q.isEmpty() && discovered.size() < this.max) {
+		while (!q.isEmpty()) {
 			WebNode node = q.extractMax();
-			System.out.println(node.relativeUrl);
+			System.out.println(node.relativeUrl + " " + node.relevance);
 			ArrayList<String> links = extractLinks(node.html);
 			
 			for (String link : links) {
-				if (!node.relativeUrl.equals(link)) {
+				if (!node.relativeUrl.equals(link) && discovered.size() < this.max) {
 					if (!discovered.contains(link)) {
 						WebNode child = new WebNode(link);
 						pagesVisited++;
@@ -248,8 +246,7 @@ public class WikiCrawler {
 						}
 						
 						if (hasTopics(child)) {
-							System.out.println(link);
-							q.add(child, calculateRelevance(child.html));
+							q.add(child, child.calculateRelevance());
 							discovered.add(link);	
 						}
 					}
@@ -259,24 +256,13 @@ public class WikiCrawler {
 	}
 	
 	public int calculateRelevance(String html) {
- 	   	HashMap<String, Integer> matches = new HashMap<String, Integer>();
- 	   	String[] document = html.split(" ");
-
- 	   	for (String word : document) {
- 	   		word = word.toLowerCase();
- 	   		if (matches.containsKey(word)) {
- 	   			matches.put(word, matches.get(word) + 1);
- 	   		} else {
- 	   			matches.put(word, 1);
- 	   		}
- 	   	}
- 	   	
  	   	int total = 0;
  	   	for (String topic: topics) {
- 	   		topic = topic.toLowerCase().trim();
- 	   		if (matches.containsKey(topic)) {
- 	   			total += matches.get(topic);
- 	   		}
+ 	 	   	Pattern p = Pattern.compile("\\b(\\w*" + topic + "\\w*)\\b");
+ 	 	   	Matcher matcher = p.matcher(html);
+ 		    while (matcher.find()) {
+ 		        total++;
+ 		    }
  	   	}
 		
 	    return total;
